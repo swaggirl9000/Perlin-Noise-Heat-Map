@@ -1,0 +1,150 @@
+// Perlin Heat Map
+// By: Adrianna Romanowski & David Borts
+// Perlin Heat Map designed to allow users to choose their desired image using sliders
+
+// Sliders
+let sizeSlider;
+let smoothSlider;
+let numColSlider;
+let stepSlider;
+let offsetSlider;
+
+// Constants
+let IMG_SIZE;
+let seedSmoothing;
+let numColor;
+let stepSize;
+let offset = 30;
+let hues = [];
+let sats = [];
+let brights = [];
+let colors = [];
+let img;
+
+let slidersCreated = 0;
+let paused = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight - 25);
+  describe('An evolving heatmap texture generated from perlin noise');
+  
+  if (slidersCreated == 0) {
+    sizeSlider = createSlider(1, 400, 150, 1);
+    smoothSlider = createSlider(0, 10, 3);
+    numColSlider = createSlider(3, 700, 610);
+    stepSlider = createSlider(0.01, 35, 3.5);
+    slidersCreated = 1;
+  }
+  
+  IMG_SIZE = sizeSlider.value();
+  seedSmoothing = smoothSlider.value();
+  numColor = numColSlider.value();
+  stepSize = stepSlider.value();
+  
+  img = createImage(IMG_SIZE, IMG_SIZE);
+  
+  for(let c = 1; c <= numColor; c++){
+    colors[c - 1] = c * (360 / numColor);
+  }
+  
+  createNoise(numColor);
+}
+
+function createNoise(numColor){
+  
+  for(let i = 0; i < IMG_SIZE * IMG_SIZE; i++){
+    let x = i % IMG_SIZE;
+    let y = floor(i / IMG_SIZE);
+    let smoothX = x * seedSmoothing * 0.001;
+    let smoothY = y * seedSmoothing * 0.001;
+    let seedNoise = noise(smoothX, smoothY);
+    hues[i] = floor(noise(offset + seedNoise, (smoothX * stepSize), 0 + (smoothY * stepSize)) * numColor);
+    sats[i] = noise(seedNoise, smoothX, smoothY) * 100;
+    brights[i] = noise(seedNoise, smoothX, smoothY) * 100;
+  }
+}
+
+function draw() {
+  noStroke();
+  
+  if (sizeSlider.value() != IMG_SIZE || smoothSlider.value() != seedSmoothing || numColSlider.value() != numColor || stepSlider.value() != stepSize) {
+    console.log("resetting...");
+    console.log(stepSlider.value());
+    console.log(stepSize);
+    setup();
+    background(img);
+    return;
+  }
+  
+  if (paused == 1) {
+    background(img);
+    return;
+  }
+  
+  img.loadPixels();
+  for(let x = 0; x < IMG_SIZE; x++){
+    for(let y = 0; y < IMG_SIZE; y++){
+      let i = y * IMG_SIZE + x;
+      let noiseHue = colors[hues[i]];
+      let noiseSaturation = sats[i] * 60 + 30;
+      let noiseBright = brights[i] * 80+ 20;
+      
+      colorMode(HSB, 360, 100,100,1);
+      let col = color(noiseHue, noiseSaturation, noiseBright);
+      
+      colorMode(RGB);
+      let r = red(col);
+      let g = green(col);
+      let b = blue(col);
+      let a = alpha(col) * 255;
+      
+      // Writing the color
+      img.pixels[i * 4] = r;
+      img.pixels[i * 4 + 1] = g;
+      img.pixels[i * 4 + 2] = b;
+      img.pixels[i * 4 + 3] = a;
+    }
+  }
+  img.updatePixels();
+  
+  background(img);
+
+  updateColorArray();
+}
+
+function updateColorArray() {
+  let last_val = colors[colors.length - 1];
+  
+  for (let i = colors.length - 1; i >= 0; i--){
+
+    if (i == 0) {
+      colors[i] = last_val;
+    }
+    else {
+      colors[i] = colors[i - 1];
+    }
+  }
+}
+
+function keyPressed() {
+
+  // If you hit the s key, save an image
+  if (key == 's') {
+    save("PerlinMap.png");
+  }
+}
+
+function mouseClicked() {
+  if (mouseY >= windowHeight - 40) {
+    return;
+  }
+  
+  if (paused == 1) {
+    paused = 0;
+    console.log("unpaused.");
+  }
+  else {
+    console.log("paused.");
+    paused = 1;
+  }
+}
