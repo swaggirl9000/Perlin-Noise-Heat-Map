@@ -1,6 +1,7 @@
 // Perlin Heat Map
 // By: Adrianna Romanowski & David Borts
 // Perlin Heat Map designed to allow users to choose their desired image using sliders
+// https://editor.p5js.org/swaggirl9000/full/dFyiwtKdy 
 
 // Sliders
 let sizeSlider;
